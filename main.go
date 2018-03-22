@@ -36,7 +36,7 @@ func (r Rule) String() string {
 func main() {
 	cfg, err := ini.Load("dreamer.ini")
 	if err != nil {
-		return errors.Wrap(err, "could not read config")
+		log.Fatal(errors.Wrap(err, "could not read config"))
 	}
 	cfg.BlockMode = false
 
