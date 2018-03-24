@@ -2,10 +2,23 @@ package main
 
 import (
 	"log"
+	"net"
 
 	"github.com/go-ini/ini"
 	"github.com/pkg/errors"
 )
+
+func serveGame() {
+	ln, err := net.Listen("tcp", ":3000")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for {
+		conn, _ := ln.Accept()
+		go spawnGame(conn)
+	}
+}
 
 /*
 func proxy(client net.Conn, server net.Conn) {
@@ -48,4 +61,9 @@ func main() {
 
 		log.Println(name)
 	}
+
+	go serveGame()
+
+	var forever chan int
+	<-forever
 }
