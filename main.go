@@ -35,10 +35,47 @@ const (
 	CMD_DONT = 0xfe
 )
 
+func (c Command) String() string {
+	switch c {
+	case CMD_IAC:
+		return "IAC"
+	case CMD_SE:
+		return "SE"
+	case CMD_NOP:
+		return "NOP"
+	case CMD_DATA:
+		return "DATA"
+	case CMD_BREAK:
+		return "BREAK"
+	case CMD_IP:
+		return "IP"
+	case CMD_ABORT:
+		return "ABORT"
+	case CMD_AYT:
+		return "AYT"
+	case CMD_ERASE:
+		return "ERASE"
+	case CMD_GO:
+		return "GO"
+	case CMD_SB:
+		return "SB"
+	case CMD_WILL:
+		return "WILL"
+	case CMD_WONT:
+		return "WONT"
+	case CMD_DO:
+		return "DO"
+	case CMD_DONT:
+		return "DONT"
+	default:
+		return "UNK"
+	}
+}
+
 type Option byte
 
 const (
-	OPT_BINARY Option = 0x00
+	OPT_BINARY Option = iota
 	OPT_ECHO
 	OPT_RECONNECTION
 	OPT_SUPPRESS_GO_AHEAD
@@ -88,19 +125,171 @@ const (
 	OPT_SEND_URL
 	OPT_FORWARD_X
 	// Unassigned options, 50-137
-	OPT_PRAGMA_LOGON = 0x8a
-	OPT_SSPI_LOGON
-	OPT_PRAGMA_HEARTBEAT
+	OPT_PRAGMA_LOGON     = 0x8a
+	OPT_SSPI_LOGON       = 0x8b
+	OPT_PRAGMA_HEARTBEAT = 0x8c
 	// Unassigned options, 141-254
-	OPT_EXTENDED
+	OPT_EXTENDED = 0xff
 )
+
+func (o Option) String() string {
+	switch o {
+	case OPT_BINARY:
+		return "BINARY"
+	case OPT_ECHO:
+		return "ECHO"
+	case OPT_RECONNECTION:
+		return "RECONNECTION"
+	case OPT_SUPPRESS_GO_AHEAD:
+		return "SUPPRESS_GO_AHEAD"
+	case OPT_APPROX_MESSAGE_SIZE:
+		return "APPROX_MESSAGE_SIZE"
+	case OPT_STATUS:
+		return "STATUS"
+	case OPT_TIMING_MARK:
+		return "TIMING_MARK"
+	case OPT_REMOTE_CONTROLLED:
+		return "REMOTE_CONTROLLED"
+	case OPT_LINE_WIDTH:
+		return "LINE_WIDTH"
+	case OPT_PAGE_SIZE:
+		return "PAGE_SIZE"
+	case OPT_CARRIAGE_RETURN:
+		return "CARRIAGE_RETURN"
+	case OPT_HORIZ_TABS:
+		return "HORIZ_TABS"
+	case OPT_FORMFEED_DISP:
+		return "FORMFEED_DISP"
+	case OPT_VERT_TABS:
+		return "VERT_TABS"
+	case OPT_VERT_TAB_DISP:
+		return "VERT_TAB_DISP"
+	case OPT_LINEFEED_DISP:
+		return "LINEFEED_DISP"
+	case OPT_EXTENDED_ASCII:
+		return "EXTENDED_ASCII"
+	case OPT_LOGOUT:
+		return "LOGOUT"
+	case OPT_BYTE_MACRO:
+		return "BYTE_MACRO"
+	case OPT_DATA_ENTRY:
+		return "DATA_ENTRY"
+	case OPT_SUPDUP:
+		return "SUPDUP"
+	case OPT_SUPDUP_OUTPUT:
+		return "SUPDUP_OUTPUT"
+	case OPT_SEND_LOCATION:
+		return "SEND_LOCATION"
+	case OPT_TERMINAL_TYPE:
+		return "TERMINAL_TYPE"
+	case OPT_END_OF_RECORD:
+		return "END_OF_RECORD"
+	case OPT_TACACS:
+		return "TACACS"
+	case OPT_OUTPUT_MARKING:
+		return "OUTPUT_MARKING"
+	case OPT_TERMINAL:
+		return "TERMINAL"
+	case OPT_TELNET_3270:
+		return "TELNET_3270"
+	case OPT_X3_PAD:
+		return "X3_PAD"
+	case OPT_WINDOW_SIZE:
+		return "WINDOW_SIZE"
+	case OPT_TERMINAL_SPEED:
+		return "TERMINAL_SPEED"
+	case OPT_REMOTE_FLOW_CONTROL:
+		return "REMOTE_FLOW_CONTROL"
+	case OPT_LINEMODE:
+		return "LINEMODE"
+	case OPT_X_DISPLAY_LOCATION:
+		return "X_DISPLAY_LOCATION"
+	case OPT_ENVIRONMENT:
+		return "ENVIRONMENT"
+	case OPT_AUTHENTICATION:
+		return "AUTHENTICATION"
+	case OPT_ENCRYPTION:
+		return "ENCRYPTION"
+	case OPT_NEW_ENVIRONMENT:
+		return "NEW_ENVIRONMENT"
+	case OPT_TN3270E:
+		return "TN3270E"
+	case OPT_XAUTH:
+		return "XAUTH"
+	case OPT_CHARSET:
+		return "CHARSET"
+	case OPT_RSP:
+		return "RSP"
+	case OPT_COM_PORT_CONTROL:
+		return "COM_PORT_CONTROL"
+	case OPT_SUPPRESS_LOCAL_ECHO:
+		return "SUPPRESS_LOCAL_ECHO"
+	case OPT_START_TLS:
+		return "START_TLS"
+	case OPT_KERMIT:
+		return "KERMIT"
+	case OPT_SEND_URL:
+		return "SEND_URL"
+	case OPT_FORWARD_X:
+		return "FORWARD_X"
+	case OPT_PRAGMA_LOGON:
+		return "PRAGMA_LOGON"
+	case OPT_SSPI_LOGON:
+		return "SSPI_LOGON"
+	case OPT_PRAGMA_HEARTBEAT:
+		return "PRAGMA_HEARTBEAT"
+	case OPT_EXTENDED:
+		return "EXTENDED"
+	default:
+		return "UNK"
+	}
+}
 
 type AnsiSeq byte
 
 const (
 	ANSI_ESCAPE AnsiSeq = 0x1b
-	ANSI_CSI            = '['
+
+	ANSI_SS2 = 'N'
+	ANSI_SS3 = 'O'
+	ANSI_DCS = 'P'
+	ANSI_CSI = '['
+	ANSI_ST  = '\\'
+	ANSI_OSC = ']'
+	ANSI_SOS = 'X'
+	ANSI_PM  = '^'
+	ANSI_APC = '_'
+	ANSI_RIS = 'c'
 )
+
+func (a AnsiSeq) String() string {
+	switch a {
+	case ANSI_ESCAPE:
+		return "ESCAPE"
+	case ANSI_SS2:
+		return "SS2"
+	case ANSI_SS3:
+		return "SS3"
+	case ANSI_DCS:
+		return "DCS"
+	case ANSI_CSI:
+		return "CSI"
+	case ANSI_ST:
+		return "ST"
+	case ANSI_OSC:
+		return "OSC"
+	case ANSI_SOS:
+		return "SOS"
+	case ANSI_PM:
+		return "PM"
+	case ANSI_APC:
+		return "APC"
+	case ANSI_RIS:
+		return "RIS"
+	default:
+		return "UNK"
+	}
+}
 
 func spawnDreamer(conn net.Conn) {
 	defer conn.Close()
@@ -114,12 +303,12 @@ func spawnDreamer(conn net.Conn) {
 	nyanBg := []string{"196", "214", "226", "34", "20", "91"}
 
 	// DO the command
-	w.Write([]byte{byte(CMD_IAC), 0xfd, 45}) // Suppress Local Echo
+	w.Write([]byte{byte(CMD_IAC), byte(CMD_DO), 45}) // Suppress Local Echo
 	// WILL the command
-	w.Write([]byte{byte(CMD_IAC), 0xfb, 1}) // Echo
+	w.Write([]byte{byte(CMD_IAC), byte(CMD_WILL), byte(OPT_ECHO)}) // Echo
 	// DON'T the command
-	w.Write([]byte{byte(CMD_IAC), 0xfe, 1})  // Echo
-	w.Write([]byte{byte(CMD_IAC), 0xfe, 34}) // Linemode
+	w.Write([]byte{byte(CMD_IAC), byte(CMD_DONT), byte(OPT_ECHO)}) // Echo
+	w.Write([]byte{byte(CMD_IAC), byte(CMD_DONT), 34})             // Linemode
 	w.Flush()
 
 	w.Write([]byte("> "))
@@ -151,7 +340,9 @@ func spawnDreamer(conn net.Conn) {
 				log.Println("could not read cmd from client,", err)
 				return
 			}
-			log.Println("cmd: ", cmd)
+			kind := Command(cmd[0])
+			option := Option(cmd[1])
+			log.Println("cmd: ", cmd, kind, option)
 
 			// TODO: Handle options and settings
 		} else if buffer[0] == '\n' || buffer[0] == '\r' {
