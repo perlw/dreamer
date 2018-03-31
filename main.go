@@ -12,10 +12,94 @@ import (
 	"github.com/pkg/errors"
 )
 
+type Command byte
+
 const (
-	CMD_BEGIN  byte = 0xff
-	CMD_ESCAPE      = 0x1b
-	CMD_CSI         = '['
+	CMD_IAC Command = 0xff
+
+	CMD_SE    = 0xf0
+	CMD_NOP   = 0xf1
+	CMD_DATA  = 0xf2
+	CMD_BREAK = 0xf3
+	CMD_IP    = 0xf4
+	CMD_ABORT = 0xf5
+	CMD_AYT   = 0xf6
+	CMD_ERASE = 0xf7
+	CMD_GO    = 0xf8
+	CMD_SB    = 0xfa
+
+	// Options
+	CMD_WILL = 0xfb
+	CMD_WONT = 0xfc
+	CMD_DO   = 0xfd
+	CMD_DONT = 0xfe
+)
+
+type Option byte
+
+const (
+	OPT_BINARY Option = 0x00
+	OPT_ECHO
+	OPT_RECONNECTION
+	OPT_SUPPRESS_GO_AHEAD
+	OPT_APPROX_MESSAGE_SIZE
+	OPT_STATUS
+	OPT_TIMING_MARK
+	OPT_REMOTE_CONTROLLED
+	OPT_LINE_WIDTH
+	OPT_PAGE_SIZE
+	OPT_CARRIAGE_RETURN
+	OPT_HORIZ_TABS
+	OPT_FORMFEED_DISP
+	OPT_VERT_TABS
+	OPT_VERT_TAB_DISP
+	OPT_LINEFEED_DISP
+	OPT_EXTENDED_ASCII
+	OPT_LOGOUT
+	OPT_BYTE_MACRO
+	OPT_DATA_ENTRY
+	OPT_SUPDUP
+	OPT_SUPDUP_OUTPUT
+	OPT_SEND_LOCATION
+	OPT_TERMINAL_TYPE
+	OPT_END_OF_RECORD
+	OPT_TACACS
+	OPT_OUTPUT_MARKING
+	OPT_TERMINAL
+	OPT_TELNET_3270
+	OPT_X3_PAD
+	OPT_WINDOW_SIZE
+	OPT_TERMINAL_SPEED
+	OPT_REMOTE_FLOW_CONTROL
+	OPT_LINEMODE
+	OPT_X_DISPLAY_LOCATION
+	OPT_ENVIRONMENT
+	OPT_AUTHENTICATION
+	OPT_ENCRYPTION
+	OPT_NEW_ENVIRONMENT
+	OPT_TN3270E
+	OPT_XAUTH
+	OPT_CHARSET
+	OPT_RSP
+	OPT_COM_PORT_CONTROL
+	OPT_SUPPRESS_LOCAL_ECHO
+	OPT_START_TLS
+	OPT_KERMIT
+	OPT_SEND_URL
+	OPT_FORWARD_X
+	// Unassigned options, 50-137
+	OPT_PRAGMA_LOGON = 0x8a
+	OPT_SSPI_LOGON
+	OPT_PRAGMA_HEARTBEAT
+	// Unassigned options, 141-254
+	OPT_EXTENDED
+)
+
+type AnsiSeq byte
+
+const (
+	ANSI_ESCAPE AnsiSeq = 0x1b
+	ANSI_CSI            = '['
 )
 
 func spawnDreamer(conn net.Conn) {
@@ -30,12 +114,12 @@ func spawnDreamer(conn net.Conn) {
 	nyanBg := []string{"196", "214", "226", "34", "20", "91"}
 
 	// DO the command
-	w.Write([]byte{CMD_BEGIN, 0xfd, 45}) // Suppress Local Echo
+	w.Write([]byte{byte(CMD_IAC), 0xfd, 45}) // Suppress Local Echo
 	// WILL the command
-	w.Write([]byte{CMD_BEGIN, 0xfb, 1}) // Echo
+	w.Write([]byte{byte(CMD_IAC), 0xfb, 1}) // Echo
 	// DON'T the command
-	w.Write([]byte{CMD_BEGIN, 0xfe, 1})  // Echo
-	w.Write([]byte{CMD_BEGIN, 0xfe, 34}) // Linemode
+	w.Write([]byte{byte(CMD_IAC), 0xfe, 1})  // Echo
+	w.Write([]byte{byte(CMD_IAC), 0xfe, 34}) // Linemode
 	w.Flush()
 
 	w.Write([]byte("> "))
@@ -45,9 +129,9 @@ func spawnDreamer(conn net.Conn) {
 	buffer := make([]byte, 1)
 	line := bytes.Buffer{}
 	for {
-		w.Write([]byte{CMD_ESCAPE, CMD_CSI})
+		w.Write([]byte{byte(ANSI_ESCAPE), byte(ANSI_CSI)})
 		w.Write([]byte(fmt.Sprintf(fg256, nyanFg[line.Len()%len(nyanFg)])))
-		w.Write([]byte{CMD_ESCAPE, CMD_CSI})
+		w.Write([]byte{byte(ANSI_ESCAPE), byte(ANSI_CSI)})
 		w.Write([]byte(fmt.Sprintf(bg256, nyanBg[line.Len()%len(nyanBg)])))
 		w.Flush()
 
@@ -60,7 +144,7 @@ func spawnDreamer(conn net.Conn) {
 		}
 
 		// Telnet commands
-		if buffer[0] == CMD_BEGIN {
+		if buffer[0] == byte(CMD_IAC) {
 			cmd := make([]byte, 2)
 			n, err := r.Read(cmd)
 			if n <= 0 || err != nil {
@@ -86,7 +170,7 @@ func spawnDreamer(conn net.Conn) {
 			}
 
 			line.Reset()
-			w.Write([]byte{CMD_ESCAPE, CMD_CSI, '0', 'm'})
+			w.Write([]byte{byte(ANSI_ESCAPE), byte(ANSI_CSI), '0', 'm'})
 			w.Write([]byte("\r\n> "))
 			w.Flush()
 		} else {
