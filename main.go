@@ -291,6 +291,10 @@ func (a AnsiSeq) String() string {
 	}
 }
 
+func NewOptionSequence(cmd Command, opt Option) []byte {
+	return []byte{byte(CMD_IAC), byte(cmd), byte(opt)}
+}
+
 func spawnDreamer(conn net.Conn) {
 	defer conn.Close()
 
@@ -302,13 +306,10 @@ func spawnDreamer(conn net.Conn) {
 	nyanFg := []string{"15", "0", "0", "0", "15", "15"}
 	nyanBg := []string{"196", "214", "226", "34", "20", "91"}
 
-	// DO the command
-	w.Write([]byte{byte(CMD_IAC), byte(CMD_DO), 45}) // Suppress Local Echo
-	// WILL the command
-	w.Write([]byte{byte(CMD_IAC), byte(CMD_WILL), byte(OPT_ECHO)}) // Echo
-	// DON'T the command
-	w.Write([]byte{byte(CMD_IAC), byte(CMD_DONT), byte(OPT_ECHO)}) // Echo
-	w.Write([]byte{byte(CMD_IAC), byte(CMD_DONT), 34})             // Linemode
+	w.Write(NewOptionSequence(CMD_DO, OPT_SUPPRESS_LOCAL_ECHO))
+	w.Write(NewOptionSequence(CMD_WILL, OPT_ECHO))
+	w.Write(NewOptionSequence(CMD_DONT, OPT_ECHO))
+	w.Write(NewOptionSequence(CMD_DONT, OPT_LINEMODE))
 	w.Flush()
 
 	w.Write([]byte("> "))
@@ -342,7 +343,7 @@ func spawnDreamer(conn net.Conn) {
 			}
 			kind := Command(cmd[0])
 			option := Option(cmd[1])
-			log.Println("cmd: ", cmd, kind, option)
+			log.Println("cmd:", cmd, kind, option)
 
 			// TODO: Handle options and settings
 		} else if buffer[0] == '\n' || buffer[0] == '\r' {
