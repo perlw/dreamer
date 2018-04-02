@@ -12,27 +12,39 @@ import (
 	"github.com/pkg/errors"
 )
 
+/** Missing codes
+ * NULL (NUL)						0
+ * Line Feed (LF)				10
+ * Carriage Return (CR)	13
+ * Bell (BEL)						7
+ * BackSpace (BS)				8
+ * Horizontal Tab (HT)	9
+ * Vertical Tab (VT)		11
+ * Form Feed (FF)				12
+ */
+
 type Command byte
 
 const (
-	CMD_IAC Command = 0xff
-
-	CMD_SE    = 0xf0
-	CMD_NOP   = 0xf1
-	CMD_DATA  = 0xf2
-	CMD_BREAK = 0xf3
-	CMD_IP    = 0xf4
-	CMD_ABORT = 0xf5
-	CMD_AYT   = 0xf6
-	CMD_ERASE = 0xf7
-	CMD_GO    = 0xf8
-	CMD_SB    = 0xfa
+	CMD_SE Command = iota + 240
+	CMD_NOP
+	CMD_DATA
+	CMD_BREAK
+	CMD_IP
+	CMD_ABORT
+	CMD_AYT
+	CMD_ERASE_CHARACTER
+	CMD_ERASE_LINE
+	CMD_GO
+	CMD_SB
 
 	// Options
-	CMD_WILL = 0xfb
-	CMD_WONT = 0xfc
-	CMD_DO   = 0xfd
-	CMD_DONT = 0xfe
+	CMD_WILL
+	CMD_WONT
+	CMD_DO
+	CMD_DONT
+
+	CMD_IAC = 255
 )
 
 func (c Command) String() string {
@@ -53,8 +65,10 @@ func (c Command) String() string {
 		return "ABORT"
 	case CMD_AYT:
 		return "AYT"
-	case CMD_ERASE:
-		return "ERASE"
+	case CMD_ERASE_CHARACTER:
+		return "ERASE_CHARACTER"
+	case CMD_ERASE_LINE:
+		return "ERASE_LINE"
 	case CMD_GO:
 		return "GO"
 	case CMD_SB:
@@ -125,9 +139,9 @@ const (
 	OPT_SEND_URL
 	OPT_FORWARD_X
 	// Unassigned options, 50-137
-	OPT_PRAGMA_LOGON     = 0x8a
-	OPT_SSPI_LOGON       = 0x8b
-	OPT_PRAGMA_HEARTBEAT = 0x8c
+	OPT_PRAGMA_LOGON = iota + 0x8a
+	OPT_SSPI_LOGON
+	OPT_PRAGMA_HEARTBEAT
 	// Unassigned options, 141-254
 	OPT_EXTENDED = 0xff
 )
