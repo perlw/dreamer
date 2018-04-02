@@ -408,7 +408,9 @@ func spawnDreamer(conn net.Conn) {
 			w.Write([]byte("> "))
 			w.Flush()
 		} else {
-			line.WriteByte(buffer[0])
+			if buffer[0] >= 33 {
+				line.WriteByte(buffer[0])
+			}
 			w.Write(buffer[0:1])
 			w.Flush()
 		}
