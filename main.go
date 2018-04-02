@@ -431,6 +431,7 @@ func serveDreamer() {
 
 	for {
 		conn, _ := ln.Accept()
+		log.Println("Connection r[", conn.RemoteAddr(), "] l[", conn.LocalAddr(), "]")
 		go spawnDreamer(conn)
 	}
 }
@@ -490,7 +491,7 @@ func main() {
 	}
 
 	go serveDreamer()
-	go serveGame()
+	//go serveGame()
 
 	var forever chan int
 	<-forever
