@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"strings"
+	"time"
 
 	"github.com/go-ini/ini"
 	"github.com/pkg/errors"
@@ -309,16 +310,23 @@ func NewOptionSequence(cmd Command, opt Option) []byte {
 	return []byte{byte(CMD_IAC), byte(cmd), byte(opt)}
 }
 
+type Blocked struct {
+	Count int
+	Since time.Time
+}
+
+var blockList map[string]Blocked
+
 func spawnDreamer(conn net.Conn) {
 	defer conn.Close()
 
 	w := bufio.NewWriter(conn)
 	r := bufio.NewReader(conn)
 
-	fg256 := "38;5;%sm"
-	bg256 := "48;5;%sm"
-	nyanFg := []string{"15", "0", "0", "0", "15", "15"}
-	nyanBg := []string{"196", "214", "226", "34", "20", "91"}
+	fg256 := "38;5;%dm"
+	bg256 := "48;5;%dm"
+	nyanFg := []int{15, 0, 0, 0, 15, 15}
+	nyanBg := []int{196, 214, 226, 34, 20, 91}
 
 	w.Write(NewOptionSequence(CMD_DO, OPT_SUPPRESS_LOCAL_ECHO))
 	w.Write(NewOptionSequence(CMD_WILL, OPT_ECHO))
@@ -333,9 +341,12 @@ func spawnDreamer(conn net.Conn) {
 	w.Write([]byte{7})
 	w.Flush()
 
+	w.Write([]byte("Speak friend and enter"))
+	w.Write([]byte{'\r', '\n', 0})
 	w.Write([]byte("> "))
 	w.Flush()
 
+	accepted := false
 	lineEnd := false
 	buffer := make([]byte, 1)
 	line := bytes.Buffer{}
@@ -402,6 +413,41 @@ func spawnDreamer(conn net.Conn) {
 				break
 			}
 
+			if !accepted {
+				if msg != "mellon" {
+					// +Blocklist checking
+					var ip string
+					parts := strings.Split(conn.RemoteAddr().String(), ":")
+					if len(parts) > 2 {
+						ip = strings.Join(parts[:len(parts)-1], ":")
+					} else {
+						ip = parts[0]
+					}
+
+					item, ok := blockList[ip]
+					if !ok {
+						item = Blocked{
+							Count: 0,
+							Since: time.Now(),
+						}
+					}
+					item.Count++
+					item.Since = time.Now()
+					blockList[ip] = item
+					// -Blocklist checking
+
+					w.Write([]byte{'\r', '\n', 0})
+					w.Write([]byte{byte(ANSI_ESCAPE), byte(ANSI_CSI)})
+					w.Write([]byte(fmt.Sprintf(fg256, 11)))
+					w.Write([]byte{byte(ANSI_ESCAPE), byte(ANSI_CSI)})
+					w.Write([]byte(fmt.Sprintf(bg256, 9)))
+					w.Write([]byte("YOU ARE NOT FRIEND; BEGONE"))
+					w.Flush()
+					break
+				}
+				accepted = true
+			}
+
 			line.Reset()
 			w.Write([]byte{byte(ANSI_ESCAPE), byte(ANSI_CSI), '0', 'm'})
 			w.Write([]byte{'\r', '\n', 0})
@@ -432,6 +478,23 @@ func serveDreamer() {
 	for {
 		conn, _ := ln.Accept()
 		log.Println("Connection r[", conn.RemoteAddr(), "] l[", conn.LocalAddr(), "]")
+
+		var ip string
+		parts := strings.Split(conn.RemoteAddr().String(), ":")
+		if len(parts) > 2 {
+			ip = strings.Join(parts[:len(parts)-1], ":")
+		} else {
+			ip = parts[0]
+		}
+		if item, ok := blockList[ip]; ok {
+			end := item.Since.Add(time.Minute * 5)
+			if time.Now().Before(end) {
+				log.Println("IS BLOCKED!", item.Count, "time")
+				conn.Close()
+				continue
+			}
+		}
+
 		go spawnDreamer(conn)
 	}
 }
@@ -489,6 +552,8 @@ func main() {
 
 		log.Println(name)
 	}
+
+	blockList = make(map[string]Blocked)
 
 	go serveDreamer()
 	//go serveGame()
