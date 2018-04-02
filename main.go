@@ -324,6 +324,13 @@ func spawnDreamer(conn net.Conn) {
 	w.Write(NewOptionSequence(CMD_WILL, OPT_ECHO))
 	w.Write(NewOptionSequence(CMD_DONT, OPT_ECHO))
 	w.Write(NewOptionSequence(CMD_DONT, OPT_LINEMODE))
+	w.Write(NewOptionSequence(CMD_DONT, OPT_TERMINAL_SPEED))
+	w.Write(NewOptionSequence(CMD_WONT, OPT_TERMINAL_SPEED))
+	w.Flush()
+
+	w.Write([]byte{byte(ANSI_ESCAPE), byte(ANSI_OSC), '0', ';'})
+	w.Write([]byte("dreamer"))
+	w.Write([]byte{7})
 	w.Flush()
 
 	w.Write([]byte("> "))
@@ -359,6 +366,26 @@ func spawnDreamer(conn net.Conn) {
 			option := Option(cmd[1])
 			log.Println("cmd:", cmd, kind, option)
 
+			if Command(cmd[0]) == CMD_SB {
+				buffer := make([]byte, 1)
+				line := bytes.Buffer{}
+				for Command(buffer[0]) != CMD_SE {
+					n, err := r.Read(buffer)
+					if err != nil {
+						log.Println("subnegotiation: could not read from client,", err)
+						return
+					} else if n <= 0 {
+						continue
+					}
+					line.WriteByte(buffer[0])
+				}
+
+				log.Println("SUBNEG:", Option(cmd[1]), []byte(line.String()))
+				/*switch Option(cmd[1]) {
+				case OPT_TERMINAL_SPEED:
+				default:
+				}*/
+			}
 			// TODO: Handle options and settings
 		} else if buffer[0] == '\n' || buffer[0] == '\r' {
 			if line.Len() == 0 {
@@ -370,7 +397,7 @@ func spawnDreamer(conn net.Conn) {
 			lineEnd = false
 
 			msg := strings.TrimRight(line.String(), "\r\n")
-			log.Println("Client said", msg)
+			log.Println("Client said", []byte(msg), msg)
 			if msg == "quit" {
 				break
 			}
