@@ -404,7 +404,8 @@ func spawnDreamer(conn net.Conn) {
 
 			line.Reset()
 			w.Write([]byte{byte(ANSI_ESCAPE), byte(ANSI_CSI), '0', 'm'})
-			w.Write([]byte("\r\n> "))
+			w.Write([]byte{'\r', '\n', 0})
+			w.Write([]byte("> "))
 			w.Flush()
 		} else {
 			line.WriteByte(buffer[0])
@@ -413,7 +414,10 @@ func spawnDreamer(conn net.Conn) {
 		}
 	}
 
-	w.Write([]byte("\r\nBYE\r\n"))
+	w.Write([]byte{byte(ANSI_ESCAPE), byte(ANSI_CSI), '0', 'm'})
+	w.Write([]byte{'\r', '\n', 0})
+	w.Write([]byte("BYE"))
+	w.Write([]byte{'\r', '\n', 0})
 	w.Flush()
 }
 
