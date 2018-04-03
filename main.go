@@ -507,6 +507,7 @@ func serveDreamer() {
 			} else {
 				item.Count = 0
 			}
+			blockList[ip] = item
 		}
 		// -Check blockList
 
