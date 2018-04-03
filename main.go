@@ -365,6 +365,8 @@ func spawnDreamer(conn net.Conn) {
 			continue
 		}
 
+		log.Println("RAW:", buffer)
+
 		// Telnet commands
 		if buffer[0] == byte(CMD_IAC) {
 			cmd := make([]byte, 2)
@@ -415,7 +417,7 @@ func spawnDreamer(conn net.Conn) {
 
 			if !accepted {
 				if msg != "mellon" {
-					// +Blocklist checking
+					// +Add to blockList
 					var ip string
 					parts := strings.Split(conn.RemoteAddr().String(), ":")
 					if len(parts) > 2 {
@@ -434,7 +436,7 @@ func spawnDreamer(conn net.Conn) {
 					item.Count++
 					item.Since = time.Now()
 					blockList[ip] = item
-					// -Blocklist checking
+					// -Add to blockList
 
 					w.Write([]byte{'\r', '\n', 0})
 					w.Write([]byte{byte(ANSI_ESCAPE), byte(ANSI_CSI)})
@@ -446,6 +448,14 @@ func spawnDreamer(conn net.Conn) {
 					break
 				}
 				accepted = true
+			}
+
+			if msg == "dump" {
+				log.Println("Initiating blockList dump")
+				for ip, item := range blockList {
+					fmt.Printf("\t[%s]:%d\n", ip, item.Count)
+				}
+				log.Println("Done")
 			}
 
 			line.Reset()
@@ -479,6 +489,7 @@ func serveDreamer() {
 		conn, _ := ln.Accept()
 		log.Println("Connection r[", conn.RemoteAddr(), "] l[", conn.LocalAddr(), "]")
 
+		// +Check blockList
 		var ip string
 		parts := strings.Split(conn.RemoteAddr().String(), ":")
 		if len(parts) > 2 {
@@ -487,13 +498,17 @@ func serveDreamer() {
 			ip = parts[0]
 		}
 		if item, ok := blockList[ip]; ok {
-			end := item.Since.Add(time.Minute * 5)
+			item.Count++
+			end := item.Since.Add(time.Minute * time.Duration(5*item.Count))
 			if time.Now().Before(end) {
-				log.Println("IS BLOCKED!", item.Count, "time")
+				log.Println("IS BLOCKED!", item.Count, "time(s)")
 				conn.Close()
 				continue
+			} else {
+				item.Count = 0
 			}
 		}
+		// -Check blockList
 
 		go spawnDreamer(conn)
 	}
