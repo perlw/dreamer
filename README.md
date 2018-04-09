@@ -1,3 +1,3 @@
 Dreamer
 ===
-Personal Telnet BBS-like portal.
+Personal Telnet BBS fantasy.
